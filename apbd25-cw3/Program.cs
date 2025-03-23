@@ -264,22 +264,36 @@ class Program
         // Tworzenie statku
         ships.Add(new ContainerShip(20.0, 5, 30.0));
 
-        // Załadunek kontenerów na statek
+        // Załadunek kontenerów na statek i usuwanie z listy containers
         ships[0].LoadContainer(containers[0]);
-        ships[0].LoadContainer(containers[1]);
-        ships[0].LoadContainer(containers[2]);
+        containers.Remove(containers[0]);
+
+        ships[0].LoadContainer(containers[0]); // Teraz indeks 0 to dawny containers[1]
+        containers.Remove(containers[0]);
+
+        ships[0].LoadContainer(containers[0]); // Teraz indeks 0 to dawny containers[2]
+        containers.Remove(containers[0]);
 
         // Wypisanie informacji
         ships[0].PrintInfo();
 
         // Opróżnienie kontenera
-        containers[1].EmptyCargo();
-        Console.WriteLine($"Po opróżnieniu: {containers[1]}");
+        // Kontener jest na statku, więc odwołujemy się do niego przez statek
+        var containerToEmpty = ships[0].GetContainers().First(c => c.SerialNumber == "KON-L-1"); // Przykładowy numer seryjny
+        containerToEmpty.EmptyCargo();
+        Console.WriteLine($"Po opróżnieniu: {containerToEmpty}");
 
-        // Przeniesienie kontenera (przykładowo na inny statek)
+        // Przeniesienie kontenera na inny statek
         ships.Add(new ContainerShip(18.0, 2, 25.0));
-        ships[1].LoadContainer(containers[2]);
-        ships[0].RemoveContainer(containers[2].SerialNumber);
+
+        // Usuwamy kontener z pierwotnego statku i dodajemy do containers
+        var containerToMove = ships[0].GetContainers().First(c => c.SerialNumber == "KON-C-1"); // Przykładowy numer seryjny
+        ships[0].RemoveContainer(containerToMove.SerialNumber);
+        containers.Add(containerToMove); // Dodajemy z powrotem do listy containers
+
+        // Ładujemy kontener na nowy statek i usuwamy z containers
+        ships[1].LoadContainer(containerToMove);
+        containers.Remove(containerToMove); // Usuwamy z listy po załadowaniu
 
         // Wypisanie zaktualizowanych informacji
         Console.WriteLine("\nPo przeniesieniu:");
@@ -288,7 +302,7 @@ class Program
 
         Console.WriteLine("Naciśnij dowolny klawisz, aby kontynuować...");
         Console.ReadKey();
-
+        
         // Przykład działania
         while (true)
         {
@@ -326,7 +340,7 @@ class Program
             for (int i = 0; i < ships.Count; i++)
                 Console.WriteLine($"{i + 1}. Statek {i + 1} (speed={ships[i].MaxSpeed}, maxContainerNum={ships[i].MaxContainerCount}, maxWeight={ships[i].MaxWeightTons})");
 
-        Console.WriteLine("\nLista kontenerów:");
+        Console.WriteLine("\nLista kontenerów w magazynie:");
         if (containers.Count == 0)
             Console.WriteLine("Brak");
         else
@@ -343,7 +357,7 @@ class Program
         Console.WriteLine("7. Załaduj ładunek do kontenera");
         Console.WriteLine("8. Opróżnij kontener");
         Console.WriteLine("9. Zastąp kontener na statku");
-        Console.WriteLine("10. Wyświetl informacje o kontenerowcu");
+        Console.WriteLine("10. Wyświetl informacje o kontenerowcu i załadowanych na niego kontenerach");
         Console.WriteLine("11. Wyświetl informacje o kontenerze");
         Console.WriteLine("12. Zakończ");
         Console.Write("Wybierz akcję: ");
@@ -516,8 +530,10 @@ class Program
                 Console.ReadLine();
                 return;
             }
-            ships[shipChoice].LoadContainer(containers[containerChoice]);
-            Console.WriteLine("Kontener załadowany na statek. Naciśnij Enter, aby kontynuować.");
+            Container containerToLoad = containers[containerChoice];
+            ships[shipChoice].LoadContainer(containerToLoad);
+            containers.RemoveAt(containerChoice); // Usuwamy kontener z listy dostępnych
+            Console.WriteLine("Kontener załadowany na statek i usunięty z listy dostępnych. Naciśnij Enter, aby kontynuować.");
         }
         catch (Exception ex)
         {
@@ -546,7 +562,7 @@ class Program
                 Console.ReadLine();
                 return;
             }
-            var shipContainers = ships[shipChoice].GetContainers(); // Zakładamy metodę GetContainers zwracającą listę kontenerów
+            var shipContainers = ships[shipChoice].GetContainers();
             if (shipContainers.Count == 0)
             {
                 Console.WriteLine("Brak kontenerów na tym statku. Naciśnij Enter, aby kontynuować.");
@@ -559,8 +575,10 @@ class Program
             int containerChoice = int.Parse(Console.ReadLine()) - 1;
             if (containerChoice >= 0 && containerChoice < shipContainers.Count)
             {
-                ships[shipChoice].RemoveContainer(shipContainers[containerChoice].SerialNumber);
-                Console.WriteLine("Kontener usunięty ze statku. Naciśnij Enter, aby kontynuować.");
+                Container containerToRemove = shipContainers[containerChoice];
+                ships[shipChoice].RemoveContainer(containerToRemove.SerialNumber);
+                containers.Add(containerToRemove); // Dodajemy kontener z powrotem do listy dostępnych
+                Console.WriteLine("Kontener usunięty ze statku i dodany do listy dostępnych. Naciśnij Enter, aby kontynuować.");
             }
             else
             {
@@ -695,7 +713,9 @@ class Program
                 Console.ReadLine();
                 return;
             }
+            containers.Add(shipContainers[oldContainerChoice]);
             ships[shipChoice].ReplaceContainer(shipContainers[oldContainerChoice].SerialNumber, containers[newContainerChoice]);
+            containers.Remove(containers[newContainerChoice]);
             Console.WriteLine("Kontener zastąpiony. Naciśnij Enter, aby kontynuować.");
         }
         catch (Exception ex)
@@ -740,7 +760,7 @@ class Program
     {
         if (containers.Count == 0)
         {
-            Console.WriteLine("Brak kontenerów. Naciśnij Enter, aby kontynuować.");
+            Console.WriteLine("Brak kontenerów w magazynie. Naciśnij Enter, aby kontynuować.");
             Console.ReadLine();
             return;
         }
