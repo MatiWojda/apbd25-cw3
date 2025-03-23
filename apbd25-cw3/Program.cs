@@ -241,41 +241,356 @@ public class ContainerShip
 // Przykład użycia
 class Program
 {
+    private static List<ContainerShip> ships = new List<ContainerShip>();
+    private static List<Container> containers = new List<Container>();
+
     static void Main()
     {
         // Tworzenie kontenerów
-        var liquidContainer = new LiquidContainer(250, 1000, 300, 5000, true);
-        var gasContainer = new GasContainer(250, 1200, 300, 4000, 2.5);
-        var refrigeratedContainer = new RefrigeratedContainer(250, 1500, 300, 6000, ProductType.Bananas, 15.0);
+        containers.Add(new LiquidContainer(250, 1000, 300, 5000, true));
+        containers.Add(new GasContainer(250, 1200, 300, 4000, 2.5));
+        containers.Add(new RefrigeratedContainer(250, 1500, 300, 6000, ProductType.Bananas, 15.0));
 
         // Załadunek ładunku
-        liquidContainer.LoadCargo(2000); // 50% z 5000 = 2500 kg
-        gasContainer.LoadCargo(3000);
-        refrigeratedContainer.LoadCargo(5000);
+        containers[0].LoadCargo(2000); // 50% z 5000 = 2500 kg
+        containers[1].LoadCargo(3000);
+        containers[2].LoadCargo(5000);
 
         // Tworzenie statku
-        var ship = new ContainerShip(20.0, 3, 30.0);
+        ships.Add(new ContainerShip(20.0, 3, 30.0));
 
         // Załadunek kontenerów na statek
-        ship.LoadContainer(liquidContainer);
-        ship.LoadContainer(gasContainer);
-        ship.LoadContainer(refrigeratedContainer);
+        ships[0].LoadContainer(containers[0]);
+        ships[0].LoadContainer(containers[1]);
+        ships[0].LoadContainer(containers[2]);
 
         // Wypisanie informacji
-        ship.PrintInfo();
+        ships[0].PrintInfo();
 
         // Opróżnienie kontenera
-        gasContainer.EmptyCargo();
-        Console.WriteLine($"Po opróżnieniu: {gasContainer}");
+        containers[1].EmptyCargo();
+        Console.WriteLine($"Po opróżnieniu: {containers[1]}");
 
         // Przeniesienie kontenera (przykładowo na inny statek)
-        var ship2 = new ContainerShip(18.0, 2, 25.0);
-        ship2.LoadContainer(refrigeratedContainer);
-        ship.RemoveContainer(refrigeratedContainer.SerialNumber);
+        ships.Add(new ContainerShip(18.0, 2, 25.0));
+        ships[1].LoadContainer(containers[2]);
+        ships[0].RemoveContainer(containers[2].SerialNumber);
 
         // Wypisanie zaktualizowanych informacji
         Console.WriteLine("\nPo przeniesieniu:");
-        ship.PrintInfo();
-        ship2.PrintInfo();
+        ships[0].PrintInfo();
+        ships[1].PrintInfo();
+        
+        Console.WriteLine("Naciśnij dowolny klawisz, aby kontynuować...");
+        Console.ReadKey();
+        
+        while (true)
+        {
+            Console.Clear();
+            DisplayShips();
+            DisplayContainers();
+            DisplayMenu();
+            string choice = Console.ReadLine();
+            HandleChoice(choice);
+            Console.WriteLine("Naciśnij dowolny klawisz, aby kontynuować...");
+            Console.ReadKey();
+        }
+    }
+
+    private static void DisplayShips()
+    {
+        Console.WriteLine("Lista kontenerowców:");
+        if (ships.Count == 0)
+        {
+            Console.WriteLine("Brak");
+        }
+        else
+        {
+            for (int i = 0; i < ships.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}. Statek {i + 1} (speed={ships[i].MaxSpeed}, maxContainerNum={ships[i].MaxContainerCount}, maxWeight={ships[i].MaxWeightTons})");
+            }
+        }
+    }
+
+    private static void DisplayContainers()
+    {
+        Console.WriteLine("Lista kontenerów:");
+        if (containers.Count == 0)
+        {
+            Console.WriteLine("Brak");
+        }
+        else
+        {
+            for (int i = 0; i < containers.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}. {containers[i].SerialNumber} - {containers[i].GetType().Name}, Masa ładunku: {containers[i].CargoMass} kg");
+            }
+        }
+    }
+
+    private static void DisplayMenu()
+    {
+        Console.WriteLine("Możliwe akcje:");
+        Console.WriteLine("1. Dodaj kontenerowiec");
+        Console.WriteLine("2. Usuń kontenerowiec");
+        Console.WriteLine("3. Dodaj kontener");
+        Console.WriteLine("4. Usuń kontener");
+        Console.WriteLine("5. Umieść kontener na statku");
+        Console.WriteLine("6. Usuń kontener ze statku");
+        Console.WriteLine("7. Załaduj ładunek do kontenera");
+        Console.WriteLine("8. Opróżnij kontener");
+        Console.WriteLine("9. Wyjdź");
+    }
+
+    private static void HandleChoice(string choice)
+    {
+        switch (choice)
+        {
+            case "1":
+                AddShip();
+                break;
+            case "2":
+                RemoveShip();
+                break;
+            case "3":
+                AddContainer();
+                break;
+            case "4":
+                RemoveContainer();
+                break;
+            case "5":
+                PlaceContainerOnShip();
+                break;
+            case "6":
+                RemoveContainerFromShip();
+                break;
+            case "7":
+                LoadCargoToContainer();
+                break;
+            case "8":
+                EmptyContainer();
+                break;
+            case "9":
+                Environment.Exit(0);
+                break;
+            default:
+                Console.WriteLine("Niepoprawny wybór. Spróbuj ponownie.");
+                break;
+        }
+    }
+
+    private static void AddShip()
+    {
+        try
+        {
+            Console.Write("Podaj maksymalną prędkość (w węzłach): ");
+            double speed = double.Parse(Console.ReadLine());
+            Console.Write("Podaj maksymalną liczbę kontenerów: ");
+            int maxContainerNum = int.Parse(Console.ReadLine());
+            Console.Write("Podaj maksymalną wagę (w tonach): ");
+            double maxWeight = double.Parse(Console.ReadLine());
+            ships.Add(new ContainerShip(speed, maxContainerNum, maxWeight));
+            Console.WriteLine("Kontenerowiec dodany pomyślnie.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Błąd: {ex.Message}");
+        }
+    }
+
+    private static void RemoveShip()
+    {
+        try
+        {
+            Console.Write("Podaj numer kontenerowca do usunięcia: ");
+            int index = int.Parse(Console.ReadLine()) - 1;
+            if (index >= 0 && index < ships.Count)
+            {
+                ships.RemoveAt(index);
+                Console.WriteLine("Kontenerowiec usunięty pomyślnie.");
+            }
+            else
+            {
+                Console.WriteLine("Niepoprawny numer.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Błąd: {ex.Message}");
+        }
+    }
+
+    private static void AddContainer()
+    {
+        try
+        {
+            Console.WriteLine("Wybierz typ kontenera:");
+            Console.WriteLine("1. Płyn");
+            Console.WriteLine("2. Gaz");
+            Console.WriteLine("3. Chłodniczy");
+            string type = Console.ReadLine();
+
+            Console.Write("Podaj wysokość (cm): ");
+            double height = double.Parse(Console.ReadLine());
+            Console.Write("Podaj wagę własną (kg): ");
+            double tareWeight = double.Parse(Console.ReadLine());
+            Console.Write("Podaj głębokość (cm): ");
+            double depth = double.Parse(Console.ReadLine());
+            Console.Write("Podaj maksymalną ładowność (kg): ");
+            double maxPayload = double.Parse(Console.ReadLine());
+
+            switch (type)
+            {
+                case "1":
+                    Console.Write("Czy jest niebezpieczny (tak/nie): ");
+                    bool isDangerous = Console.ReadLine().ToLower() == "tak";
+                    containers.Add(new LiquidContainer(height, tareWeight, depth, maxPayload, isDangerous));
+                    Console.WriteLine("Kontener na płyny dodany pomyślnie.");
+                    break;
+                case "2":
+                    Console.Write("Podaj ciśnienie (atm): ");
+                    double pressure = double.Parse(Console.ReadLine());
+                    containers.Add(new GasContainer(height, tareWeight, depth, maxPayload, pressure));
+                    Console.WriteLine("Kontener na gaz dodany pomyślnie.");
+                    break;
+                case "3":
+                    Console.WriteLine("Wybierz typ produktu:");
+                    foreach (ProductType pt in Enum.GetValues(typeof(ProductType)))
+                    {
+                        Console.WriteLine($"{(int)pt + 1}. {pt}");
+                    }
+                    int productChoice = int.Parse(Console.ReadLine()) - 1;
+                    ProductType productType = (ProductType)productChoice;
+                    Console.Write("Podaj utrzymywaną temperaturę (°C): ");
+                    double temperature = double.Parse(Console.ReadLine());
+                    containers.Add(new RefrigeratedContainer(height, tareWeight, depth, maxPayload, productType, temperature));
+                    Console.WriteLine("Kontener chłodniczy dodany pomyślnie.");
+                    break;
+                default:
+                    Console.WriteLine("Niepoprawny typ.");
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Błąd: {ex.Message}");
+        }
+    }
+
+    private static void RemoveContainer()
+    {
+        try
+        {
+            Console.Write("Podaj numer kontenera do usunięcia: ");
+            int index = int.Parse(Console.ReadLine()) - 1;
+            if (index >= 0 && index < containers.Count)
+            {
+                containers.RemoveAt(index);
+                Console.WriteLine("Kontener usunięty pomyślnie.");
+            }
+            else
+            {
+                Console.WriteLine("Niepoprawny numer.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Błąd: {ex.Message}");
+        }
+    }
+
+    private static void PlaceContainerOnShip()
+    {
+        try
+        {
+            Console.Write("Podaj numer kontenerowca: ");
+            int shipIndex = int.Parse(Console.ReadLine()) - 1;
+            Console.Write("Podaj numer kontenera: ");
+            int containerIndex = int.Parse(Console.ReadLine()) - 1;
+            if (shipIndex >= 0 && shipIndex < ships.Count && containerIndex >= 0 && containerIndex < containers.Count)
+            {
+                ships[shipIndex].LoadContainer(containers[containerIndex]);
+                Console.WriteLine("Kontener umieszczony na statku pomyślnie.");
+            }
+            else
+            {
+                Console.WriteLine("Niepoprawny numer.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Błąd: {ex.Message}");
+        }
+    }
+
+    private static void RemoveContainerFromShip()
+    {
+        try
+        {
+            Console.Write("Podaj numer kontenerowca: ");
+            int shipIndex = int.Parse(Console.ReadLine()) - 1;
+            Console.Write("Podaj numer seryjny kontenera: ");
+            string serialNumber = Console.ReadLine();
+            if (shipIndex >= 0 && shipIndex < ships.Count)
+            {
+                ships[shipIndex].RemoveContainer(serialNumber);
+                Console.WriteLine("Kontener usunięty ze statku pomyślnie.");
+            }
+            else
+            {
+                Console.WriteLine("Niepoprawny numer.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Błąd: {ex.Message}");
+        }
+    }
+
+    private static void LoadCargoToContainer()
+    {
+        try
+        {
+            Console.Write("Podaj numer kontenera: ");
+            int index = int.Parse(Console.ReadLine()) - 1;
+            if (index >= 0 && index < containers.Count)
+            {
+                Console.Write("Podaj masę ładunku (kg): ");
+                double mass = double.Parse(Console.ReadLine());
+                containers[index].LoadCargo(mass);
+                Console.WriteLine("Ładunek załadowany pomyślnie.");
+            }
+            else
+            {
+                Console.WriteLine("Niepoprawny numer.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Błąd: {ex.Message}");
+        }
+    }
+
+    private static void EmptyContainer()
+    {
+        try
+        {
+            Console.Write("Podaj numer kontenera: ");
+            int index = int.Parse(Console.ReadLine()) - 1;
+            if (index >= 0 && index < containers.Count)
+            {
+                containers[index].EmptyCargo();
+                Console.WriteLine("Kontener opróżniony pomyślnie.");
+            }
+            else
+            {
+                Console.WriteLine("Niepoprawny numer.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Błąd: {ex.Message}");
+        }
     }
 }
